@@ -1,0 +1,333 @@
+#include <LiquidCrystal_I2C.h>
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+#include <SoftwareSerial.h>               
+String number = "1234567890";  String number1 = "0987654321"; 
+SoftwareSerial gsm(5,6);          //RX, TX
+
+const char* ssid = "IOT";
+const char* password = "KARUR001";  
+ float MOI;
+int i=0;int j=0;int S=0;int S1=0;int s2=0;
+void setup()
+{
+lcd.init();
+lcd.backlight();
+lcd.clear();
+lcd.setCursor(0,0);
+lcd.print("WATER CONTROL  ");
+lcd.setCursor(0,1);
+lcd.print("   SYSTEM");
+Serial.begin(9600); // Starts the serial communication
+     gsm.begin(9600);       
+delay(3000);
+pinMode(3,OUTPUT);
+digitalWrite(3,LOW);
+  gsm.println("AT+CMGF=1\r");         //gsm text mode
+  delay(1000);
+  gsm.println("AT+CNMI=2,2,0,0,0\r"); //read new sms mode
+  delay(1000);
+  gsm.println("AT+CMGD=1,4");         //delete sms
+  delay(1000);
+}
+
+//long previous_message = 0;
+void loop() {
+
+
+  i++;
+  if(i%10==0)
+  {j++;
+    }
+//   
+//    long current = millis();
+//    if (current - previous_message > 3000) {
+//        previous_message = current;
+//         float hum = dht.readHumidity();
+//         float temp = dht.readTemperature();
+//         float MOI =  map(analogRead(A0), 0, 1023, 100, 0);
+//        // float bi = map(digitalRead(D1), 0, 1, 100, 0 );
+//         if (isnan(hum) || isnan(temp)  ){
+//    Serial.println(F("Failed to read from DHT sensor!"));
+//
+//
+//    return;
+//  }
+
+
+  MOI =  map(analogRead(A0), 0, 1023, 200, 0);
+
+
+//  Serial.print("WATER L: ");
+//  Serial.println(MOI);
+//  Serial.print("ANIMAL AND BIRD: ");
+//  Serial.print(bi);
+if(analogRead(A1)>500)
+{
+  lcd.clear();
+
+lcd.setCursor(0,0);
+  lcd.print(" WATER LEAKAGE");
+
+  lcd.setCursor(0,1);
+  lcd.print("DETECT");
+ delay(500);
+  sms6();
+  delay(5000);
+    sms5();
+    delay(5000);
+  }
+lcd.clear();
+
+lcd.setCursor(0,0);
+  lcd.print(" WATER L");
+    lcd.print(" DAY:");lcd.print(j);
+  lcd.setCursor(0,1);
+  lcd.print(MOI);
+ delay(500);
+  if(MOI<=99)
+  {
+
+String postData;  
+postData = "WATER L:"+String(MOI);  
+
+Serial.println(postData); 
+    digitalWrite(3,LOW);
+  
+delay(1000);
+    
+  
+     //delay(100);
+      //digitalWrite(D0,HIGH); 
+    }
+    else
+    {
+     
+
+     
+    }
+
+   if(j==2 && s2==0)
+   {
+    sms();
+    delay(5000);
+    s2++;
+    } 
+
+   if(j==3 &&  MOI>=100 && S==0)
+   {
+    lcd.clear();
+S++;
+lcd.setCursor(0,0);
+  lcd.print("PRE SMS SEND");
+   delay(1000); 
+       sms1();
+    delay(5000);
+        sms2();
+    delay(5000);
+    }
+   if(j==5 &&  MOI>=100 && S1==0)
+   {
+    lcd.clear();
+S1++;
+lcd.setCursor(0,0);
+  lcd.print("POS SMS SEND");
+       sms3();
+    delay(5000);
+        sms4();
+    delay(5000);
+String postData;  
+delay(5000);
+postData = "MOITURE:"+String(MOI);  
+
+Serial.println(postData);
+   digitalWrite(3,HIGH);
+delay(15000);
+  digitalWrite(3,LOW);    
+  i=0;j=0;S=0;S1=0;s2=0;
+    }
+   if(j==6){j=0;s2=0;}   
+
+
+       
+    }
+
+
+void sms(){
+  lcd.setCursor(0, 0) ;
+  lcd.print("water level       ");
+  lcd.setCursor(0, 1) ;
+  lcd.print("SMS SEND ");
+//  lcd.print(i);  
+  lcd.print("          ");
+  delay(100);
+  //String msg = "I am in trouble! Lat:"+String(Lat)+",Lot:"+String(Lot)+"Alt:"+String(Alt);
+  String msg = "Water level in tank " + String(MOI);
+  delay(100);
+  gsm.println("AT+CMGF=1");    //Sets the GSM Module in Text Mode
+  delay(500);
+  gsm.println("AT+CMGS=\"+91"+number+"\"\r");    //assign reciver`s number
+  delay(1000);
+  gsm.println(msg);
+  Serial.print(msg);
+  delay(500);
+  gsm.println((char)26);// ASCII code of CTRL+Z
+  delay(1000);
+
+  delay(5000);
+}
+
+
+
+
+
+
+void sms1(){
+  lcd.setCursor(0, 0) ;
+  lcd.print("admin       ");
+  lcd.setCursor(0, 1) ;
+  lcd.print("SMS SEND ");
+//  lcd.print(i);  
+  lcd.print("          ");
+  delay(100);
+  //String msg = "I am in trouble! Lat:"+String(Lat)+",Lot:"+String(Lot)+"Alt:"+String(Alt);
+  String msg = "Water will arrived in 2 days  level in tank " + String(MOI);
+  delay(100);
+  gsm.println("AT+CMGF=1");    //Sets the GSM Module in Text Mode
+  delay(500);
+  gsm.println("AT+CMGS=\"+91"+number+"\"\r");    //assign reciver`s number
+  delay(1000);
+  gsm.println(msg);
+  Serial.print(msg);
+  delay(500);
+  gsm.println((char)26);// ASCII code of CTRL+Z
+  delay(1000);
+
+  delay(5000);
+}
+
+
+
+void sms2(){
+  lcd.setCursor(0, 0) ;
+  lcd.print("user           ");
+  lcd.setCursor(0, 1) ;
+  lcd.print("SMS SEND ");
+//  lcd.print(i);  
+  lcd.print("          ");
+  delay(100);
+  //String msg = "I am in trouble! Lat:"+String(Lat)+",Lot:"+String(Lot)+"Alt:"+String(Alt);
+  String msg = "Water will arrived in 2 days  level in tank " + String(MOI);
+  delay(100);
+  gsm.println("AT+CMGF=1");    //Sets the GSM Module in Text Mode
+  delay(500);
+  gsm.println("AT+CMGS=\"+91"+number1+"\"\r");    //assign reciver`s number
+  delay(1000);
+  gsm.println(msg);
+  Serial.print(msg);
+  delay(500);
+  gsm.println((char)26);// ASCII code of CTRL+Z
+  delay(1000);
+
+  delay(5000);
+}
+
+
+
+
+void sms3(){
+      lcd.setCursor(0, 0) ;
+  lcd.print("in admin      ");
+  lcd.setCursor(0, 1) ;
+  lcd.print("SMS SEND ");
+//  lcd.print(i);  
+  lcd.print("          ");
+  delay(100);
+  //String msg = "I am in trouble! Lat:"+String(Lat)+",Lot:"+String(Lot)+"Alt:"+String(Alt);
+  String msg = "Water will reach in 2 hours  level in tank " + String(MOI);
+  delay(100);
+  gsm.println("AT+CMGF=1");    //Sets the GSM Module in Text Mode
+  delay(500);
+  gsm.println("AT+CMGS=\"+91"+number+"\"\r");    //assign reciver`s number
+  delay(1000);
+  gsm.println(msg);
+  Serial.print(msg);
+  delay(500);
+  gsm.println((char)26);// ASCII code of CTRL+Z
+  delay(1000);
+
+  delay(5000);
+}
+void sms4(){
+     lcd.setCursor(0, 0) ;
+  lcd.print("in user      ");
+  lcd.setCursor(0, 1) ;
+  lcd.print("SMS SEND ");
+//  lcd.print(i);  
+  lcd.print("          ");
+  delay(100);
+  //String msg = "I am in trouble! Lat:"+String(Lat)+",Lot:"+String(Lot)+"Alt:"+String(Alt);
+  String msg = "Water will reach in 2 hours  level in tank " + String(MOI);
+  delay(100);
+  gsm.println("AT+CMGF=1");    //Sets the GSM Module in Text Mode
+  delay(500);
+  gsm.println("AT+CMGS=\"+91"+number1+"\"\r");    //assign reciver`s number
+  delay(1000);
+  gsm.println(msg);
+  Serial.print(msg);
+  delay(500);
+  gsm.println((char)26);// ASCII code of CTRL+Z
+  delay(1000);
+
+  delay(5000);
+}
+
+
+
+
+    
+void sms6(){
+      lcd.setCursor(0, 0) ;
+  lcd.print("leakage      ");
+  lcd.setCursor(0, 1) ;
+  lcd.print("SMS SEND ");
+//  lcd.print(i);  
+  lcd.print("          ");
+  delay(100);
+  //String msg = "I am in trouble! Lat:"+String(Lat)+",Lot:"+String(Lot)+"Alt:"+String(Alt);
+  String msg = "leak found";
+  delay(100);
+  gsm.println("AT+CMGF=1");    //Sets the GSM Module in Text Mode
+  delay(500);
+  gsm.println("AT+CMGS=\"+91"+number+"\"\r");    //assign reciver`s number
+  delay(1000);
+  gsm.println(msg);
+  Serial.print(msg);
+  delay(500);
+  gsm.println((char)26);// ASCII code of CTRL+Z
+  delay(1000);
+
+  delay(5000);
+}
+void sms5(){
+     lcd.setCursor(0, 0) ;
+  lcd.print("leakage      ");
+  lcd.setCursor(0, 1) ;
+  lcd.print("SMS SEND ");
+//  lcd.print(i);  
+  lcd.print("          ");
+  delay(100);
+  //String msg = "I am in trouble! Lat:"+String(Lat)+",Lot:"+String(Lot)+"Alt:"+String(Alt);
+  String msg = "leak found";
+  delay(100);
+  gsm.println("AT+CMGF=1");    //Sets the GSM Module in Text Mode
+  delay(500);
+  gsm.println("AT+CMGS=\"+91"+number1+"\"\r");    //assign reciver`s number
+  delay(1000);
+  gsm.println(msg);
+  Serial.print(msg);
+  delay(500);
+  gsm.println((char)26);// ASCII code of CTRL+Z
+  delay(1000);
+
+  delay(5000);
+}
